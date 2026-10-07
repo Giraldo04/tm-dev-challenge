@@ -197,16 +197,16 @@ function love.keypressed(tecla)
   -- acabado y probado no gana nada mirando el reloj.
   if tecla == "e" then decision.terminarYa(requisitos) end
   if tecla == "r" then fallo = nil; pcall(function () mundo:reiniciar() end) end
-  -- Los requisitos se trabajan pegándoselos a tu agente de uno en uno, y en un
-  -- lienzo no se pueden seleccionar con el ratón. Cada número copia el suyo;
-  -- C los copia todos, para cuando quieras el panorama completo.
+  if tecla == "n" then
+    local siguiente = (mundo.nivelActual % motor.NUM_NIVELES) + 1
+    pcall(function () mundo:cargarNivel(siguiente) end)
+  end
+  -- R-93: 1-9 salta directo al nivel N, para probar rápido. Antes copiaban el
+  -- requisito N al portapapeles (ver SUPUESTOS.md: se decidió a propósito
+  -- sacrificar ese atajo por este). C sigue copiando todos los requisitos.
   local n = tonumber(tecla)
   if n and n >= 1 and n <= 9 then
-    local texto = requisitos.comoTexto(n)
-    if texto ~= "" then
-      love.system.setClipboardText(texto)
-      copiado, copiadoQue = 2.5, (requisitos.lista[n] or {}).id or ""
-    end
+    pcall(function () mundo:cargarNivel(n) end)
   end
   if tecla == "c" then
     local texto = requisitos.comoTexto()

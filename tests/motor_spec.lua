@@ -78,4 +78,42 @@ return function (t)
     end
     esperar(llego, "un salto hacia la derecha tendría que dejarlo encima")
   end)
+
+  t("hay al menos tres niveles y se cargan desde src/niveles.lua", function (esperar)
+    local niveles = require("src.niveles")
+    esperar(#niveles >= 3, "tendría que haber al menos tres niveles")
+  end)
+
+  t("motor.nuevo carga el nivel que se le pide", function (esperar)
+    local niveles = require("src.niveles")
+    for i = 1, #niveles do
+      local m = motor.nuevo(960, 540, i)
+      esperar(m.nivelActual == i, "nivelActual debería ser " .. i)
+      esperar(#m.plataformas == #niveles[i].plataformas,
+        "el nivel " .. i .. " tendría que traer sus propias plataformas")
+    end
+  end)
+
+  t("los tres niveles son distintos entre sí", function (esperar)
+    local niveles = require("src.niveles")
+    local m1 = motor.nuevo(960, 540, 1)
+    local m2 = motor.nuevo(960, 540, 2)
+    local m3 = motor.nuevo(960, 540, 3)
+    esperar(#m1.plataformas ~= #m2.plataformas or m1.plataformas[1].w ~= m2.plataformas[1].w,
+      "el nivel 1 y el 2 no deberían ser iguales")
+    esperar(#m2.plataformas ~= #m3.plataformas or m2.plataformas[1].w ~= m3.plataformas[1].w,
+      "el nivel 2 y el 3 no deberían ser iguales")
+  end)
+
+  t("motor:cargarNivel cambia las plataformas y reinicia al jugador", function (esperar)
+    local m = motor.nuevo(960, 540, 1)
+    for _ = 1, 60 do m:actualizar(1 / 60, { derecha = true }) end
+    local ok = m:cargarNivel(2)
+    esperar(ok, "cargarNivel debería aceptar un índice válido")
+    esperar(m.nivelActual == 2, "el nivel activo debería ser el 2")
+    esperar(m.jugador.x == m.inicio.x and m.jugador.y == m.inicio.y,
+      "el jugador vuelve a su punto de partida al cambiar de nivel")
+    esperar(not m:cargarNivel(99), "un índice que no existe no debería aceptarse")
+  end)
+
 end

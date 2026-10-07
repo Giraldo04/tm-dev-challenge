@@ -1,5 +1,6 @@
 -- Lo que se ve. Nada de lógica aquí: si una decisión del juego acaba en este
 -- fichero, deja de poder probarse sin abrir una ventana.
+local motor = require("src.motor")
 local pintar = {}
 
 function pintar.mundo(m)
@@ -16,8 +17,10 @@ function pintar.mundo(m)
 
   love.graphics.setColor(0.55, 0.6, 0.7)
   love.graphics.print(
-    "flechas o A/D · espacio salta · R reinicia · C copia · E entrega ya · " ..
-    "F5 recarga tu código · TAB esconde el panel", 14, 12)
+    "flechas o A/D · espacio salta · R reinicia · 1-9/N cambia de nivel · C copia todos · " ..
+    "E entrega ya · F5 recarga tu código · TAB esconde el panel", 14, 12)
+  love.graphics.setColor(0.45, 0.55, 0.7)
+  love.graphics.print(("nivel %d/%d"):format(m.nivelActual, motor.NUM_NIVELES), 14, 28)
   love.graphics.setColor(1, 1, 1)
 end
 
@@ -65,7 +68,7 @@ function pintar.requisitos(R, copiado)
       x + 14, y + 52, w - 28)
     -- La ayuda puede ocupar una línea o dos según el ancho de la ventana, así
     -- que se mide: con una altura fija, el primer requisito se montaba encima.
-    local ayuda = "1-9 copia uno · C todos · rueda baja · los tienes en REQUISITOS-RECIBIDOS.md"
+    local ayuda = "1-9 carga ese nivel · C copia todos · rueda baja · los tienes en REQUISITOS-RECIBIDOS.md"
     local fuente = love.graphics.getFont()
     local _, lineasAyuda = fuente:getWrap(ayuda, w - 28)
     love.graphics.setColor(0.45, 0.55, 0.7)

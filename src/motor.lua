@@ -9,6 +9,8 @@
   aquí, casi seguro que la lógica se está mezclando con el dibujo.
 ]]
 
+local niveles = require("src.niveles")
+
 local motor = {}
 motor.__index = motor
 
@@ -16,20 +18,39 @@ local GRAVEDAD = 1800      -- px/s²
 local VELOCIDAD = 260      -- px/s en horizontal
 local IMPULSO = 620        -- px/s al saltar
 
---- Un mundo nuevo, con su suelo y sus plataformas.
-function motor.nuevo(ancho, alto)
+motor.NUM_NIVELES = #niveles
+
+local function clonarPlataformas(nivel)
+  local plats = {}
+  for i, p in ipairs(nivel.plataformas) do
+    plats[i] = { x = p.x, y = p.y, w = p.w, h = p.h }
+  end
+  return plats
+end
+
+--- Un mundo nuevo, con su suelo y sus plataformas, del nivel pedido (1 si no se dice).
+function motor.nuevo(ancho, alto, indiceNivel)
   local m = setmetatable({}, motor)
   m.ancho, m.alto = ancho or 960, alto or 540
-  m.jugador = { x = 80, y = 100, vx = 0, vy = 0, w = 28, h = 36, enSuelo = false }
-  m.plataformas = {
-    { x = 0,   y = m.alto - 40, w = m.ancho, h = 40 },   -- el suelo
-    -- Cada escalón sube 90 px: el salto llega a unos 107 (IMPULSO² / 2·GRAVEDAD),
-    -- así que con más de eso la plataforma se ve pero no se alcanza.
-    { x = 220, y = m.alto - 130, w = 180, h = 18 },
-    { x = 480, y = m.alto - 220, w = 200, h = 18 },
-  }
-  m.inicio = { x = m.jugador.x, y = m.jugador.y }
+  m.nivelActual = indiceNivel or 1
+  local nivel = niveles[m.nivelActual] or niveles[1]
+  m.plataformas = clonarPlataformas(nivel)
+  local inicio = nivel.inicio or { x = 80, y = 100 }
+  m.jugador = { x = inicio.x, y = inicio.y, vx = 0, vy = 0, w = 28, h = 36, enSuelo = false }
+  m.inicio = { x = inicio.x, y = inicio.y }
   return m
+end
+
+--- Cambia de nivel sin tocar el resto del mundo (tamaño de ventana, etc).
+function motor:cargarNivel(indice)
+  local nivel = niveles[indice]
+  if not nivel then return false end
+  self.nivelActual = indice
+  self.plataformas = clonarPlataformas(nivel)
+  local inicio = nivel.inicio or { x = 80, y = 100 }
+  self.inicio = { x = inicio.x, y = inicio.y }
+  self:reiniciar()
+  return true
 end
 
 local function solapan(a, b)
@@ -44,6 +65,7 @@ function motor:actualizar(dt, entrada)
   j.vx = 0
   if entrada.izquierda then j.vx = -VELOCIDAD end
   if entrada.derecha then j.vx = VELOCIDAD end
+
   if entrada.saltar and j.enSuelo then
     j.vy = -IMPULSO
     j.enSuelo = false
